@@ -1,0 +1,71 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+wheels/
+*.egg-info/
+*.egg
+MANIFEST
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Test & coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.cache
+nosetests.xml
+
+# --- Type checkers ---
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+
+# --- IDE / editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Tooling local config ---
+CLAUDE.md
+.claude/
+
+# --- Build scratch & control files (never ship) ---
+.builder_*
+.build_metadata*
+.stage_*
+.spawn.*
+_build_*
+*_BLOCKED.md
+BUILD_SETUP_NEXT_STEPS.md
+DRIFT*
