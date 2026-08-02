@@ -3,36 +3,99 @@
   "name": "agent-explain",
   "github": "https://github.com/SuperMarioYL/agent-explain",
   "host": "agent-explain.lei6393.com",
-  "lang": { "primary": "zh", "toggle": true },
-  "accent": ["#c89b3c", "#a87d2a", "#7a5a1c"],
+  "lang": {
+    "primary": "zh",
+    "toggle": true
+  },
+  "accent": [
+    "#c89b3c",
+    "#a87d2a",
+    "#7a5a1c"
+  ],
   "hero": {
-    "eyebrow": { "zh": "批准前 · 看代价 · 不动机器", "en": "Before approve · See the cost · Nothing runs" },
-    "headline": { "zh": "批准前，先看清\n这份计划要花多少", "en": "See what a plan costs\nbefore you approve it" },
-    "sub": { "zh": "像数据库的 EXPLAIN——agent 执行前，先给你这份计划的成本与风险预演。", "en": "Like a database EXPLAIN — a cost & risk preview of the agent's plan, before it runs." },
+    "eyebrow": {
+      "zh": "批准前 · 看代价 · 不动机器",
+      "en": "Before approve · See the cost · Nothing runs"
+    },
+    "headline": {
+      "zh": "批准前，先看清\n这份计划要花多少",
+      "en": "See what a plan costs\nbefore you approve it"
+    },
+    "sub": {
+      "zh": "像数据库的 EXPLAIN——agent 执行前，先给你这份计划的成本与风险预演。",
+      "en": "Like a database EXPLAIN — a cost & risk preview of the agent's plan, before it runs."
+    },
     "command": "uvx agent-explain plan.md"
   },
   "advantages": [
     {
-      "title": { "zh": "每一步要花多少 token", "en": "What each step costs in tokens" },
-      "body": { "zh": "批准前就告诉你每一步预计烧多少 token——给范围与置信度，不给拍脑袋的点估计。", "en": "Tells you the token cost of every step before you approve — as a range with confidence, not a guess." },
-      "chips": ["› 给范围，不给点估计", "› 逐步 token 预估", "› 置信度标注"]
+      "title": {
+        "zh": "每一步要花多少 token",
+        "en": "What each step costs in tokens"
+      },
+      "body": {
+        "zh": "批准前就告诉你每一步预计烧多少 token——读你计划旁的真实文件，给范围与置信度，不给拍脑袋的点估计。",
+        "en": "Tells you the token cost of every step before you approve — reads the real files next to your plan, gives a range with confidence, not a guess."
+      },
+      "chips": [
+        "› 给范围，不给点估计",
+        "› 逐步 token 预估",
+        "› 置信度标注",
+        "› 读本地真实文件"
+      ]
     },
     {
-      "title": { "zh": "哪一步最危险，提前标出来", "en": "Which steps are riskiest, flagged ahead" },
-      "body": { "zh": "哪一步会动你的文件、跑脚本、外发请求——在第一个 action 跑起来前就标好。", "en": "Which steps touch your files, run scripts, or call out — flagged before the first action runs." },
-      "chips": ["› 逐步风险标记", "› 触及文件清单", "› 工具调用计数"]
+      "title": {
+        "zh": "哪一步最危险，提前标出来",
+        "en": "Which steps are riskiest, flagged ahead"
+      },
+      "body": {
+        "zh": "哪一步会动你的文件、跑脚本、外发请求——在第一个 action 跑起来前就标好。",
+        "en": "Which steps touch your files, run scripts, or call out — flagged before the first action runs."
+      },
+      "chips": [
+        "› 逐步风险标记",
+        "› 触及文件清单",
+        "› 工具调用计数"
+      ]
     },
     {
-      "title": { "zh": "纯预演，没跑一个 action", "en": "Pure dry-run — nothing runs" },
-      "body": { "zh": "只投影，不执行。不烧 token 去预览 token 花销，本地秒出。你说了才算。", "en": "It projects, never executes. Doesn't burn tokens to preview token spend — instant, local. You stay in charge." },
-      "chips": ["› 本地秒出", "› 不跑 LLM", "› 你说了才执行"]
+      "title": {
+        "zh": "纯预演，没跑一个 action",
+        "en": "Pure dry-run — nothing runs"
+      },
+      "body": {
+        "zh": "只投影，不执行。不烧 token 去预览 token 花销，本地秒出。你说了才算。",
+        "en": "It projects, never executes. Doesn't burn tokens to preview token spend — instant, local. You stay in charge."
+      },
+      "chips": [
+        "› 本地秒出",
+        "› 不跑 LLM",
+        "› 你说了才执行"
+      ]
     }
   ],
-  "scene": { "kind": "mesh" },
-  "cta": {
-    "headline": { "zh": "在批准前，把计划看穿", "en": "See through a plan before you approve it" },
-    "sub": { "zh": "一条命令，拿到每一步的代价与风险。", "en": "One command, every step's cost and risk." },
-    "button": { "zh": "看 GitHub", "en": "View on GitHub" }
+  "scene": {
+    "kind": "mesh"
   },
-  "footer": { "tag": { "zh": "MIT · 开源 · 本地运行", "en": "MIT · open source · runs locally" } }
+  "cta": {
+    "headline": {
+      "zh": "在批准前，把计划看穿",
+      "en": "See through a plan before you approve it"
+    },
+    "sub": {
+      "zh": "一条命令，拿到每一步的代价与风险。",
+      "en": "One command, every step's cost and risk."
+    },
+    "button": {
+      "zh": "看 GitHub",
+      "en": "View on GitHub"
+    }
+  },
+  "footer": {
+    "tag": {
+      "zh": "MIT · 开源 · 本地运行",
+      "en": "MIT · open source · runs locally"
+    }
+  }
 }
