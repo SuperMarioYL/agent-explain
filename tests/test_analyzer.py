@@ -106,3 +106,38 @@ def test_analyze_files_touched_carry_through():
     )
     proj = analyze_step(step)
     assert set(proj.files_touched) == {"src/auth.py", "src/models.py"}
+
+
+def test_analyze_basis_sampled_via_base_dir_not_cwd(tmp_path, monkeypatch):
+    """A relative path that exists next to the plan (base_dir) but NOT in the
+    caller's cwd must still sample (basis="sampled") when base_dir is passed.
+
+    Regression for the v0.1.0 cwd-resolution bug: without base_dir, sampling
+    silently degraded to "static" whenever the CLI ran outside the plan's dir.
+    """
+    plan_dir = tmp_path / "plan_dir"
+    plan_dir.mkdir()
+    real_file = plan_dir / "auth.py"
+    real_file.write_text("def authenticate(user, password):\n    pass\n")
+
+    # Run from a cwd that does NOT contain auth.py, so cwd-relative resolution
+    # would miss it.
+    other_dir = tmp_path / "elsewhere"
+    other_dir.mkdir()
+    monkeypatch.chdir(other_dir)
+
+    step = Step(
+        id=1,
+        raw_text="Read `auth.py` to understand auth.",
+        tool_verbs=["read"],
+        file_paths=["auth.py"],
+    )
+
+    # Without base_dir (the v0.1.0 behaviour): the file is invisible from cwd.
+    proj_no_base = analyze_step(step)
+    assert proj_no_base.basis == "static"
+
+    # With base_dir = the plan's directory: the file is found and sampled.
+    proj_with_base = analyze_step(step, base_dir=plan_dir)
+    assert proj_with_base.basis == "sampled"
+    assert proj_with_base.confidence == 0.70

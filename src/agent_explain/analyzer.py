@@ -11,6 +11,9 @@ Given a parsed Step, the analyzer produces a StepProjection with:
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from .models import Step, StepProjection
 from .risk_rules import classify_risk
 from .token_est import estimate_step_tokens
@@ -23,9 +26,19 @@ _CONFIDENCE: dict[str, float] = {
 }
 
 
-def analyze_step(step: Step) -> StepProjection:
-    """Analyze a single step and produce its projection."""
-    (low, high), basis = estimate_step_tokens(step.raw_text, step.file_paths)
+def analyze_step(
+    step: Step, base_dir: str | os.PathLike[str] | None = None
+) -> StepProjection:
+    """Analyze a single step and produce its projection.
+
+    *base_dir* (the plan file's parent) is forwarded to the token estimator so
+    relative paths in the step text resolve against the plan's location, not
+    the caller's working directory — preserving the "sampled" confidence basis
+    regardless of where the CLI is invoked from.
+    """
+    (low, high), basis = estimate_step_tokens(
+        step.raw_text, step.file_paths, base_dir=base_dir
+    )
     risk = classify_risk(step.raw_text)
 
     return StepProjection(

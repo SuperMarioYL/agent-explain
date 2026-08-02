@@ -46,22 +46,39 @@ def count_text_tokens(text: str) -> int:
     return len(enc.encode(text))
 
 
-def estimate_file_tokens(path: str) -> int | None:
+def estimate_file_tokens(
+    path: str, base_dir: str | os.PathLike[str] | None = None
+) -> int | None:
     """Estimate token count for a local file based on its byte size.
 
-    Returns None if the file is not readable or does not exist.
+    Returns None if the file is not readable or does not exist. When *base_dir*
+    is given (the plan file's parent), *path* is resolved against it first, then
+    as-is (cwd-relative / absolute) — so sampling does not silently depend on
+    the CLI's working directory. This fixes a v0.1.0 defect where a relative
+    path from the plan text was resolved against the process cwd and the
+    "sampled" basis degraded to "static" whenever the CLI was run from any
+    directory other than the plan's.
     """
-    try:
-        size = os.path.getsize(path)
-    except (OSError, TypeError):
-        return None
-    if size < 0:
+    candidates: list[str] = []
+    if base_dir is not None:
+        candidates.append(os.path.join(str(base_dir), path))
+    candidates.append(path)
+    size: int | None = None
+    for candidate in candidates:
+        try:
+            size = os.path.getsize(candidate)
+            break
+        except (OSError, TypeError):
+            continue
+    if size is None or size < 0:
         return None
     return max(1, size // _BYTES_PER_TOKEN)
 
 
 def estimate_step_tokens(
-    step_text: str, file_paths: list[str]
+    step_text: str,
+    file_paths: list[str],
+    base_dir: str | os.PathLike[str] | None = None,
 ) -> tuple[tuple[int, int], str]:
     """Return ((low, high), basis) for a step's projected token usage.
 
@@ -70,13 +87,17 @@ def estimate_step_tokens(
            multiplied by an uncertainty factor.
 
     basis = "sampled" if any file size was read, else "static".
+
+    *base_dir* (the plan file's parent) is forwarded to ``estimate_file_tokens``
+    so relative paths in the plan text resolve against the plan's location,
+    not the caller's working directory.
     """
     text_tokens = count_text_tokens(step_text)
     file_tokens = 0
     sampled = False
 
     for fp in file_paths:
-        est = estimate_file_tokens(fp)
+        est = estimate_file_tokens(fp, base_dir=base_dir)
         if est is not None:
             file_tokens += est
             sampled = True

@@ -45,7 +45,10 @@ def explain(
     """Project a coding-agent plan's cost and risk before execution."""
     text = plan_file.read_text(encoding="utf-8")
     plan = parse_plan(text)
-    proj = project(plan)
+    # Resolve plan-referenced file paths against the plan file's directory, not
+    # the CLI's working directory, so the "sampled" confidence basis is stable
+    # regardless of where the user invokes the command from.
+    proj = project(plan, base_dir=plan_file.parent)
 
     if json_output:
         render_json(proj)

@@ -10,14 +10,24 @@ The projector runs the analyzer on each step, then rolls up totals:
 
 from __future__ import annotations
 
+import os
+
 from .analyzer import analyze_step
 from .models import Plan, PlanProjection, StepProjection, Totals
 
 
-def project(plan: Plan) -> PlanProjection:
-    """Project an entire plan: analyze each step, aggregate totals."""
+def project(
+    plan: Plan, base_dir: str | os.PathLike[str] | None = None
+) -> PlanProjection:
+    """Project an entire plan: analyze each step, aggregate totals.
+
+    *base_dir* (the plan file's parent) is forwarded to each step's analyzer
+    so relative file paths resolve against the plan's location, not the CLI's
+    working directory — keeping the "sampled" confidence basis stable across
+    invocation directories.
+    """
     step_projections: list[StepProjection] = [
-        analyze_step(s) for s in plan.steps
+        analyze_step(s, base_dir=base_dir) for s in plan.steps
     ]
 
     if not step_projections:

@@ -5,4 +5,4 @@ before you approve, so the tired human-in-the-loop inspects at the cost
 layer instead of rubber-stamping.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

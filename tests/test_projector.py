@@ -96,3 +96,32 @@ def test_project_empty_plan():
 def test_project_step_ids_sequential():
     proj = project(_make_plan())
     assert [sp.step_id for sp in proj.steps] == [1, 2, 3, 4]
+
+
+def test_project_base_dir_enables_sampling_from_other_cwd(tmp_path, monkeypatch):
+    """project(plan, base_dir=...) threads the plan dir to the estimator so a
+    relative path that exists next to the plan is sampled even when the CLI
+    runs from an unrelated cwd. Regression for the v0.1.0 cwd-resolution bug.
+    """
+    plan_dir = tmp_path / "plan_dir"
+    plan_dir.mkdir()
+    (plan_dir / "auth.py").write_text("def authenticate():\n    pass\n")
+
+    monkeypatch.chdir(tmp_path)  # cwd has no auth.py
+
+    plan = Plan(
+        steps=[
+            Step(
+                id=1,
+                raw_text="Read `auth.py`.",
+                tool_verbs=["read"],
+                file_paths=["auth.py"],
+            ),
+        ]
+    )
+
+    without_base = project(plan)
+    assert without_base.steps[0].basis == "static"
+
+    with_base = project(plan, base_dir=plan_dir)
+    assert with_base.steps[0].basis == "sampled"
