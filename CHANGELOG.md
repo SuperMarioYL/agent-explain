@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-07
+
+### Fixed
+- **fix-directory-sampling-as-file** — `estimate_file_tokens` now guards `os.path.getsize` with `os.path.isfile`, so only *regular files* are sampled. Previously, a directory path — which `extract_file_paths` extracts whenever a path is backtick-quoted with a trailing or internal slash (e.g. `` `src/` ``, `` `migrations/` ``, see `test_extract_directory_paths`) — made `getsize` succeed and return the directory's *inode* size (64 bytes on macOS APFS, ~4096 on Linux ext4), yielding a tiny positive token count that falsely flipped `sampled=True` and reported `basis="sampled"` (the 0.70 high-confidence basis) with a misleadingly small token range, when no real file content was measured. Non-regular candidates (directories, FIFOs, sockets, symlinks-to-dirs, broken symlinks) now fall through to `None` → `basis="static"`, keeping the honesty invariant ("sampled" = a real local file size was read) intact. This is distinct from the v0.2.0 `m4_fix_file_path_cwd` fix (which resolved *where* plan-referenced paths are read — plan dir vs cwd; this fixes *what* is sampled — regular files only, not directory inodes). Covered by a regression test.
+
 ## [0.2.0] - 2026-08-03
 
 ### Fixed
@@ -22,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rule-based `risk_rules` (delete/move file = high; shell-exec / network = medium-high; read-only = low) — no LLM call in v0.1.
 - Ranges + confidence basis on every projection (never a point estimate) as the direct mitigation for the hardest technical falsifier ("estimates can't beat eyeballing").
 
-[Unreleased]: https://github.com/SuperMarioYL/agent-explain/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SuperMarioYL/agent-explain/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.1.0

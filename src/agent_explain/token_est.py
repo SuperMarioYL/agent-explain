@@ -51,13 +51,16 @@ def estimate_file_tokens(
 ) -> int | None:
     """Estimate token count for a local file based on its byte size.
 
-    Returns None if the file is not readable or does not exist. When *base_dir*
-    is given (the plan file's parent), *path* is resolved against it first, then
-    as-is (cwd-relative / absolute) — so sampling does not silently depend on
-    the CLI's working directory. This fixes a v0.1.0 defect where a relative
-    path from the plan text was resolved against the process cwd and the
-    "sampled" basis degraded to "static" whenever the CLI was run from any
-    directory other than the plan's.
+    Returns None if the candidate is not a regular file or is not readable or
+    does not exist. Non-regular candidates (directories, FIFOs, sockets,
+    symlinks-to-dirs, broken symlinks) return None rather than their inode
+    size, so only real file content is sampled. When *base_dir* is given (the
+    plan file's parent), *path* is resolved against it first, then as-is
+    (cwd-relative / absolute) — so sampling does not silently depend on the
+    CLI's working directory. This fixes a v0.1.0 defect where a relative path
+    from the plan text was resolved against the process cwd and the "sampled"
+    basis degraded to "static" whenever the CLI was run from any directory
+    other than the plan's.
     """
     candidates: list[str] = []
     if base_dir is not None:
@@ -66,6 +69,21 @@ def estimate_file_tokens(
     size: int | None = None
     for candidate in candidates:
         try:
+            # Guard: only sample *regular files*. A directory path — which
+            # ``extract_file_paths`` extracts for backtick-quoted paths with a
+            # trailing/internal slash (e.g. ``src/``, ``migrations/``) — would
+            # otherwise make ``getsize`` succeed and return the directory's
+            # *inode* size (64 bytes on macOS APFS, ~4096 on Linux ext4),
+            # yielding a tiny positive token count that falsely flips
+            # ``sampled=True`` and reports ``basis="sampled"`` (the 0.70
+            # high-confidence basis) with a misleadingly small token range,
+            # when no real file content was measured. ``isfile`` is False for
+            # directories, FIFOs, sockets, symlinks-to-dirs, and broken
+            # symlinks, so non-regular candidates fall through to ``None`` →
+            # ``basis="static"``, keeping the "sampled" honesty invariant
+            # ("sampled" = a real local file size was read) intact.
+            if not os.path.isfile(candidate):
+                continue
             size = os.path.getsize(candidate)
             break
         except (OSError, TypeError):

@@ -141,3 +141,44 @@ def test_analyze_basis_sampled_via_base_dir_not_cwd(tmp_path, monkeypatch):
     proj_with_base = analyze_step(step, base_dir=plan_dir)
     assert proj_with_base.basis == "sampled"
     assert proj_with_base.confidence == 0.70
+
+
+def test_analyze_directory_path_not_sampled(tmp_path):
+    """A step referencing an *existing* directory (e.g. `` `migrations/` ``)
+    must report basis="static", NOT "sampled".
+
+    Regression for fix-directory-sampling-as-file (v0.3.0): without an
+    ``os.path.isfile`` guard, ``os.path.getsize`` succeeds on a directory and
+    returns its *inode* size (64 bytes on macOS APFS, ~4096 on Linux ext4).
+    That yields a tiny positive token count, flips ``sampled=True``, and the
+    step reports the 0.70 high-confidence "sampled" basis with a
+    misleadingly small token range — when no real file content was measured.
+    Only regular files may sample.
+    """
+    # A real, existing directory (so getsize would succeed without the fix).
+    real_dir = tmp_path / "migrations"
+    real_dir.mkdir()
+
+    step = Step(
+        id=1,
+        raw_text="Look at the `migrations/` directory.",
+        tool_verbs=["read"],
+        file_paths=["migrations/"],
+    )
+    proj = analyze_step(step, base_dir=tmp_path)
+
+    # The directory inode must NOT count as sampled file content.
+    assert proj.basis == "static"      # NOT "sampled"
+    assert proj.confidence == 0.40     # static confidence, not 0.70
+    # No misleading tiny sampled range: the directory contributed zero file
+    # tokens, so the projection matches the text-only (static) estimate.
+    text_only = analyze_step(
+        Step(
+            id=1,
+            raw_text=step.raw_text,
+            tool_verbs=["read"],
+            file_paths=[],
+        ),
+        base_dir=tmp_path,
+    )
+    assert proj.est_tokens == text_only.est_tokens
