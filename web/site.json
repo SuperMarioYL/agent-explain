@@ -34,14 +34,14 @@
         "en": "What each step costs in tokens"
       },
       "body": {
-        "zh": "批准前就告诉你每一步预计烧多少 token——读你计划旁的真实文件，给范围与置信度，不给拍脑袋的点估计。",
-        "en": "Tells you the token cost of every step before you approve — reads the real files next to your plan, gives a range with confidence, not a guess."
+        "zh": "批准前就告诉你每一步预计烧多少 token——读你计划旁的真实文件，给范围与置信度。跑测试、构建的命令不会被当成它读过的文件，所以标到的高置信度都是真量过文件得来的，不是被命令字眼骗出来的。",
+        "en": "Tells you the token cost of every step before you approve — reads the real files next to your plan, gives a range with confidence. Run-test and build commands aren't mistaken for files it read, so every high-confidence mark comes from a genuinely measured file, not a keyword it got fooled by."
       },
       "chips": [
         "› 给范围，不给点估计",
         "› 逐步 token 预估",
-        "› 置信度标注",
-        "› 读本地真实文件"
+        "› 读本地真实文件",
+        "› 置信度不虚标"
       ]
     },
     {
@@ -98,6 +98,6 @@
       "en": "MIT · open source · runs locally"
     }
   },
-  "content_version": "v0.3.0",
-  "generated_at": "2026-08-06T23:17:32Z"
+  "content_version": "v0.4.0",
+  "generated_at": "2026-08-11T19:18:01Z"
 }
