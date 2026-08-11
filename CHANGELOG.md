@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-12
+
+### Fixed
+- **fix-backtick-commands-extracted-as-paths** — `extract_file_paths` now masks backtick-quoted code spans before running `_BARE_PATH_RE`, so command interiors (e.g. `python manage.py migrate`, `pytest tests/`, `node server.js --port 3000`) are no longer mined for bare paths like `manage.py`/`server.js`. Separately, `_looks_like_path` now rejects candidates containing internal whitespace, so a whole command string ending in an extension (e.g. `docker compose up app.py`, `pip install -r requirements.txt`) is not accepted as a single path. Previously these false paths — the most common agent-plan input (run/test commands) — flipped `basis="sampled"` (the 0.70 high-confidence basis) and inflated `files_touched` for files the plan never referenced, re-breaking the v0.2.0/v0.3.0 "sampled honesty" invariant; the false `files_touched` + basis also propagated into the `--json` output consumed by pre-approval gates. Real bare paths in prose *outside* backticks are unaffected (masking is surgical). Covered by 5 regression tests that fail without the fix.
+
 ## [0.3.0] - 2026-08-07
 
 ### Fixed
@@ -27,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rule-based `risk_rules` (delete/move file = high; shell-exec / network = medium-high; read-only = low) — no LLM call in v0.1.
 - Ranges + confidence basis on every projection (never a point estimate) as the direct mitigation for the hardest technical falsifier ("estimates can't beat eyeballing").
 
-[Unreleased]: https://github.com/SuperMarioYL/agent-explain/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/SuperMarioYL/agent-explain/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.4.0
 [0.3.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.1.0

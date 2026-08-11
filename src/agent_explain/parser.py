@@ -68,6 +68,11 @@ def _looks_like_path(s: str) -> bool:
     s = s.strip()
     if not s or len(s) < 2:
         return False
+    # Reject candidates with internal whitespace — a whole command such as
+    # "docker compose up app.py" must not be accepted as a single path even
+    # though its tail has a known extension.
+    if re.search(r"\s", s):
+        return False
     # Skip URLs.
     if s.startswith(("http://", "https://", "ftp://")):
         return False
@@ -90,6 +95,17 @@ def _looks_like_path(s: str) -> bool:
     return False
 
 
+def _mask_backtick_spans(text: str) -> str:
+    """Replace each backtick-quoted span with spaces of equal length.
+
+    The masked text is fed to ``_BARE_PATH_RE`` so the interior of
+    backtick-quoted commands (e.g. `` `python manage.py migrate` ``) is
+    never mined for bare paths. Real bare paths appearing in prose
+    *outside* backticks are preserved untouched on the returned text.
+    """
+    return _BACKTICK_RE.sub(lambda m: " " * len(m.group(0)), text)
+
+
 def extract_file_paths(text: str) -> list[str]:
     """Extract file/directory paths from *text*.
 
@@ -97,6 +113,11 @@ def extract_file_paths(text: str) -> list[str]:
     Deduplicates while preserving order. A bare path that is a substring
     of an already-found backtick path (e.g. ``auth.py`` inside
     ``src/auth.py``) is skipped.
+
+    Backtick-quoted code spans are treated atomically: their interior is
+    masked before the bare-path regex runs, so command substrings such as
+    ``manage.py`` inside `` `python manage.py migrate` `` are never mined
+    as bare paths.
     """
     paths: list[str] = []
     seen: set[str] = set()
@@ -108,8 +129,11 @@ def extract_file_paths(text: str) -> list[str]:
             seen.add(candidate)
             paths.append(candidate)
 
-    # 2. Bare paths with extensions — skip substrings of found paths.
-    for match in _BARE_PATH_RE.finditer(text):
+    # 2. Bare paths with extensions — search the text with backtick spans
+    #    masked so command interiors are never mined for bare paths. Real
+    #    bare paths in prose outside backticks survive the masking.
+    masked = _mask_backtick_spans(text)
+    for match in _BARE_PATH_RE.finditer(masked):
         candidate = match.group(1)
         if not _looks_like_path(candidate) or candidate in seen:
             continue

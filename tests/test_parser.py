@@ -182,3 +182,52 @@ def test_parse_single_step():
     plan = parse_plan("Read `src/auth.py`.")
     assert len(plan.steps) == 1
     assert plan.steps[0].id == 1
+
+
+# ---------- regression: backtick command interiors not mined (v0.4.0) ----------
+
+
+def test_backtick_command_interior_not_mined_for_bare_path():
+    """A `word.ext` inside a backtick-quoted command must not be mined."""
+    text = "Run `python manage.py migrate` to apply the schema."
+    paths = extract_file_paths(text)
+    assert "manage.py" not in paths
+    assert paths == []
+
+
+def test_backtick_command_interior_with_trailing_ext_not_mined():
+    """`node server.js --port 3000` must not yield `server.js`."""
+    text = "Start the server with `node server.js --port 3000`."
+    paths = extract_file_paths(text)
+    assert "server.js" not in paths
+    assert paths == []
+
+
+def test_whole_command_with_whitespace_not_accepted_as_path():
+    """A whole command with internal whitespace ending in `.ext` (e.g.
+    `docker compose up app.py`) must not be accepted as a single path."""
+    text = "Run `docker compose up app.py` in the project root."
+    paths = extract_file_paths(text)
+    assert "docker compose up app.py" not in paths
+    assert "app.py" not in paths
+    assert paths == []
+
+
+def test_backtick_command_in_plan_step_no_files_touched():
+    """A plan step whose backtick command contains a `word.ext` must not
+    produce a file_paths entry for that `word.ext`."""
+    plan = parse_plan(
+        "## Step 1: Run migration\n"
+        "Run `python manage.py migrate` to apply the schema.\n"
+    )
+    assert len(plan.steps) == 1
+    assert "manage.py" not in plan.steps[0].file_paths
+
+
+def test_real_bare_paths_outside_backticks_survive_masking():
+    """Masking backtick spans must not hide real bare paths in prose
+    outside the backticks."""
+    text = "Run `python manage.py migrate`, then edit auth.py to fix the bug."
+    paths = extract_file_paths(text)
+    assert "manage.py" not in paths
+    assert "auth.py" in paths
