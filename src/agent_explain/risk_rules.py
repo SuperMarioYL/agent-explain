@@ -22,7 +22,8 @@ _HIGH_PATTERNS: list[re.Pattern[str]] = [
         r"\b(?:delete|remove|rm|drop|truncate|overwrite|destroy|wipe|purge)\b",
         r"\b(?:mv|move|rename|relocate)\b",
         r"\bgit\s+(?:push|force|reset|--hard|clean|rm|rebase)\b",
-        r"\b(?:format|fdisk|mkfs)\b",
+        r"\b(?:fdisk|mkfs)\b",
+        r"\bformat\s+(?:/dev/|sd[a-z]|nvme|hd|disk|drive|[a-z]:)\b",
         r"\bsudo\s+rm\b",
         r"\bchmod\s+[0-7]{3,4}\b",
     ]

@@ -44,6 +44,11 @@ _STEP_HEADER_RE = re.compile(
 # Numbered list: "1. text" or "1) text"
 _NUM_LIST_RE = re.compile(r"^(\d+)[.)]\s+(.+)$", re.MULTILINE)
 
+# Any markdown header line (^#{1,6}\s). Used to bound a step's body at the
+# next header of *any* kind, so non-step sections (## Notes, ## Background,
+# ## References, ## Appendix) are not folded into the preceding step's body.
+_ANY_HEADER_RE = re.compile(r"^#{1,6}\s", re.MULTILINE)
+
 # --- File path patterns ---
 _BACKTICK_RE = re.compile(r"`([^`]+)`")
 
@@ -61,6 +66,12 @@ _CODE_EXTENSIONS = frozenset(
 _BARE_PATH_RE = re.compile(
     r"(?<![`\w\-])([\w\-][\w\-./]*\.[a-zA-Z]{1,5}(?:/[\w\-./]+)*)"
 )
+
+# Bare URL span (scheme + host + path). Masked before _BARE_PATH_RE so the
+# host+path interior is never mined as a bare path — the scheme's ":" is not
+# in the path char class, so _BARE_PATH_RE otherwise starts matching at the
+# host (e.g. example.com/api, github.com/repo/blob/main/app.py).
+_URL_SPAN_RE = re.compile(r"https?://\S+|ftp://\S+")
 
 
 def _looks_like_path(s: str) -> bool:
@@ -81,6 +92,12 @@ def _looks_like_path(s: str) -> bool:
         return False
     # Skip email addresses.
     if "@" in s and "/" not in s:
+        return False
+    # Reject host.tld/path strings whose scheme was stripped by _BARE_PATH_RE
+    # (so the startswith("http(s)://") guard above never fires) and scheme-less
+    # bare host+path in prose. Requires a "/" so single-segment files like
+    # auth.py are unaffected.
+    if re.match(r"^[\w.-]+\.[a-zA-Z]{2,}/", s):
         return False
     # Directory path (ends with /).
     if s.endswith("/") and "/" in s[:-1]:
@@ -106,6 +123,16 @@ def _mask_backtick_spans(text: str) -> str:
     return _BACKTICK_RE.sub(lambda m: " " * len(m.group(0)), text)
 
 
+def _mask_url_spans(text: str) -> str:
+    """Replace each bare URL span (scheme + host + path) with spaces of equal
+    length, so the host+path interior is never mined by ``_BARE_PATH_RE``.
+
+    Mirrors ``_mask_backtick_spans``. URLs inside backtick spans are already
+    blanked by ``_mask_backtick_spans`` before this runs.
+    """
+    return _URL_SPAN_RE.sub(lambda m: " " * len(m.group(0)), text)
+
+
 def extract_file_paths(text: str) -> list[str]:
     """Extract file/directory paths from *text*.
 
@@ -129,10 +156,12 @@ def extract_file_paths(text: str) -> list[str]:
             seen.add(candidate)
             paths.append(candidate)
 
-    # 2. Bare paths with extensions — search the text with backtick spans
-    #    masked so command interiors are never mined for bare paths. Real
-    #    bare paths in prose outside backticks survive the masking.
+    # 2. Bare paths with extensions — search the text with backtick spans and
+    #    URL spans masked so command interiors and URL host+paths are never
+    #    mined for bare paths. Real bare paths in prose outside backticks and
+    #    URLs survive the masking.
     masked = _mask_backtick_spans(text)
+    masked = _mask_url_spans(masked)
     for match in _BARE_PATH_RE.finditer(masked):
         candidate = match.group(1)
         if not _looks_like_path(candidate) or candidate in seen:
@@ -179,7 +208,16 @@ def _parse_by_headers(text: str) -> list[Step]:
     for i, match in enumerate(matches):
         step_num = int(match.group(2))
         start = match.end()
+        # Bound the body at the next step header OR the next *any* markdown
+        # header line, whichever comes first — so non-step sections (## Notes,
+        # ## Background, ## References, ## Appendix) are not folded into this
+        # step's raw_text (and thus not mined for file paths / sampled as
+        # basis). The next step header is itself an any-header, so contiguous
+        # step behaviour is unchanged.
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        next_header = _ANY_HEADER_RE.search(text, start)
+        if next_header:
+            end = min(end, next_header.start())
         body = text[start:end].strip()
         # Combine header title + body as the step's raw text.
         title = match.group(3).strip()
@@ -199,7 +237,13 @@ def _parse_by_numbered_list(text: str) -> list[Step]:
     for i, match in enumerate(matches):
         step_num = int(match.group(1))
         start = match.end()
+        # Bound the body at the next numbered item OR the next *any* markdown
+        # header line, whichever comes first — so trailing non-step sections
+        # (## Notes, ## Background) are not folded into the last item's body.
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        next_header = _ANY_HEADER_RE.search(text, start)
+        if next_header:
+            end = min(end, next_header.start())
         body = text[start:end].strip()
         line = match.group(2).strip()
         raw_text = f"{line}\n{body}" if body else line

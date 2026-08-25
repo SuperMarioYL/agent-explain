@@ -39,7 +39,7 @@ def test_no_false_positive_version_numbers():
 def test_no_false_positive_urls():
     text = "Check https://example.com/api for docs."
     paths = extract_file_paths(text)
-    assert not any("http" in p for p in paths)
+    assert paths == []
 
 
 def test_deduplicate_paths():
@@ -231,3 +231,97 @@ def test_real_bare_paths_outside_backticks_survive_masking():
     paths = extract_file_paths(text)
     assert "manage.py" not in paths
     assert "auth.py" in paths
+
+
+# ---------- regression: step body must not absorb non-step sections (v0.5.0) ----------
+
+
+def test_header_step_does_not_absorb_non_step_section_between_steps():
+    """A non-step ## Notes section between two steps must not be folded into
+    the preceding step's raw_text / file_paths.
+
+    Regression for fix-step-body-absorbs-non-step-sections: _parse_by_headers
+    previously bounded each step's body at the next *step-header* only, so a
+    ## Notes section (and the bare paths it mentions) was absorbed into the
+    preceding step and mined by extract_file_paths.
+    """
+    plan = parse_plan(
+        "## Step 1: Read the auth module\n"
+        "Read `src/auth.py` to understand the current auth flow.\n"
+        "\n"
+        "## Notes\n"
+        "Background prose mentioning config.py and utils.py.\n"
+        "\n"
+        "## Step 2: Create migration\n"
+        "Create `migrations/001_add_users.py` with the user schema.\n"
+    )
+    assert len(plan.steps) == 2
+    assert plan.steps[0].file_paths == ["src/auth.py"]
+    assert "config.py" not in plan.steps[0].file_paths
+    assert "utils.py" not in plan.steps[0].file_paths
+    assert plan.steps[1].file_paths == ["migrations/001_add_users.py"]
+
+
+def test_header_step_does_not_absorb_trailing_non_step_section():
+    """A ## Notes section after the last step must not be folded into that
+    last step's raw_text / file_paths."""
+    plan = parse_plan(
+        "## Step 1: Read the auth module\n"
+        "Read `src/auth.py` to understand the current auth flow.\n"
+        "\n"
+        "## Notes\n"
+        "Background prose mentioning config.py and utils.py.\n"
+    )
+    assert len(plan.steps) == 1
+    assert plan.steps[0].file_paths == ["src/auth.py"]
+    assert "config.py" not in plan.steps[0].file_paths
+    assert "utils.py" not in plan.steps[0].file_paths
+
+
+def test_numbered_step_does_not_absorb_trailing_non_step_section():
+    """A ## Notes section after the last numbered item must not be folded
+    into that item's raw_text / file_paths.
+
+    Same boundary defect as _parse_by_headers (parser.py:202).
+    """
+    plan = parse_plan(
+        "1. Read `src/auth.py` to understand the auth flow.\n"
+        "2. Create `migrations/001_add_users.py` with the user schema.\n"
+        "\n"
+        "## Notes\n"
+        "Background prose mentioning config.py and utils.py.\n"
+    )
+    assert len(plan.steps) == 2
+    assert plan.steps[1].file_paths == ["migrations/001_add_users.py"]
+    assert "config.py" not in plan.steps[1].file_paths
+    assert "utils.py" not in plan.steps[1].file_paths
+
+
+# ---------- regression: URL host+path not mined as file path (v0.5.0) ----------
+
+
+def test_url_host_path_not_extracted_as_file_path():
+    """A bare URL with a deep path (github.com/repo/blob/main/app.py) must
+    not be mined as a file path — the scheme's ":" is not in the path char
+    class, so _BARE_PATH_RE would otherwise start matching at the host."""
+    text = "See https://github.com/repo/blob/main/app.py for the source."
+    paths = extract_file_paths(text)
+    assert paths == []
+    assert "app.py" not in paths
+
+
+def test_schemeless_domain_path_not_extracted_as_file_path():
+    """A scheme-less host+path written in prose (example.com/api) must not be
+    accepted as a file path by the domain-shape guard in _looks_like_path."""
+    text = "See example.com/api for the endpoint."
+    paths = extract_file_paths(text)
+    assert paths == []
+
+
+def test_bare_file_path_not_rejected_by_domain_guard():
+    """A single-segment bare file (auth.py) must still be extracted — the
+    domain-shape guard requires a "/" so it never fires here."""
+    text = "Edit the file auth.py to add validation."
+    paths = extract_file_paths(text)
+    assert "auth.py" in paths
+
