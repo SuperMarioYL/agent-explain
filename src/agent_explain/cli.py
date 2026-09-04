@@ -11,6 +11,7 @@ from pathlib import Path
 
 import typer
 
+from . import __version__
 from .parser import parse_plan
 from .projector import project
 from .renderer import render_json, render_table
@@ -25,6 +26,21 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
 )
+
+
+@app.callback(invoke_without_command=True)
+def _main(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        help="Show the installed version and exit.",
+        is_eager=True,
+    ),
+) -> None:
+    """agent-explain — dry-run EXPLAIN for coding-agent plans."""
+    if version:
+        typer.echo(f"agent-explain {__version__}")
+        raise typer.Exit()
 
 
 @app.command()

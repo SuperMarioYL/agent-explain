@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-04
+
+### Fixed
+- Version-surface drift: the deployed marketing site still showed
+  `v0.3.0` while the package shipped `0.5.0` — bumped
+  `web/site.json` `content_version` to `0.6.0` (no prefix, matching
+  `__version__`) so the live site tracks the shipped tag.
+- Added a `--version` flag to the CLI (the version-surface completeness
+  gap — a user could not verify the installed version via the CLI).
+- Added `tests/test_version.py` asserting `__version__` ==
+  `pyproject.toml` version == `web/site.json` `content_version` ==
+  CHANGELOG head == `--version` output; fails on the v0.5.0 tag.
+
+[0.6.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.6.0
+
+
 ## [0.5.0] - 2026-08-25
 
 ### Fixed
