@@ -1,0 +1,20 @@
+{
+  "version": "0.6.0",
+  "fixture": "Constructed three-step plan; two existing-file references and one absent path. No planned action executes.",
+  "inputs": [
+    {
+      "path": "examples/presentation/auth.py",
+      "content": "def authenticate(user):\n    return bool(user)\n"
+    },
+    {
+      "path": "examples/presentation/plan.md",
+      "content": "1. Read `auth.py`.\n2. Edit `auth.py`.\n3. Delete `obsolete.json`.\n"
+    }
+  ],
+  "steps": [
+    {
+      "command": "agent-explain explain examples/presentation/plan.md --json",
+      "output": "{\n  \"steps\": [\n    {\n      \"step_id\": 1,\n      \"est_tokens\": [\n        5,\n        25\n      ],\n      \"tool_call_count\": 1,\n      \"risk_class\": \"low\",\n      \"files_touched\": [\n        \"auth.py\"\n      ],\n      \"confidence\": 0.7,\n      \"basis\": \"sampled\"\n    },\n    {\n      \"step_id\": 2,\n      \"est_tokens\": [\n        5,\n        25\n      ],\n      \"tool_call_count\": 1,\n      \"risk_class\": \"medium\",\n      \"files_touched\": [\n        \"auth.py\"\n      ],\n      \"confidence\": 0.7,\n      \"basis\": \"sampled\"\n    },\n    {\n      \"step_id\": 3,\n      \"est_tokens\": [\n        5,\n        10\n      ],\n      \"tool_call_count\": 1,\n      \"risk_class\": \"high\",\n      \"files_touched\": [\n        \"obsolete.json\"\n      ],\n      \"confidence\": 0.4,\n      \"basis\": \"static\"\n    }\n  ],\n  \"totals\": {\n    \"est_tokens_range\": [\n      15,\n      60\n    ],\n    \"total_tool_calls\": 3,\n    \"risk_breakdown\": {\n      \"low\": 1,\n      \"medium\": 1,\n      \"high\": 1\n    },\n    \"total_files_touched\": 2\n  },\n  \"confidence_note\": \"Estimates are ranges; calibrate against your actuals. Some local file sizes were sampled; others are text-only.\"\n}\n"
+    }
+  ]
+}

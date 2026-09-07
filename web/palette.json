@@ -1,0 +1,38 @@
+{
+  "mode": "auto",
+  "id": "56e6e3-6aa6e7-acf6da-e16cc6481460",
+  "identity": "https://github.com/supermarioyl/agent-explain",
+  "primary": "#56e6e3",
+  "secondary": "#6aa6e7",
+  "highlight": "#acf6da",
+  "dark": {
+    "bg": "#050c12",
+    "panel": "#0c171e",
+    "code": "#0a171d",
+    "ink": "#eefdf8",
+    "muted": "#95b9c4",
+    "line": "#173c40",
+    "primary": "#56e6e3",
+    "secondary": "#6aa6e7",
+    "highlight": "#acf6da",
+    "accent": "#56e6e3",
+    "buttonStart": "#318281",
+    "buttonEnd": "#4e79a9",
+    "buttonText": "#ffffff"
+  },
+  "light": {
+    "bg": "#f9fefe",
+    "panel": "#f7fefe",
+    "code": "#f3fdfd",
+    "ink": "#132a2f",
+    "muted": "#547a86",
+    "line": "#cbf7f6",
+    "primary": "#307f7e",
+    "secondary": "#4c77a6",
+    "highlight": "#567c6e",
+    "accent": "#307f7e",
+    "buttonStart": "#318281",
+    "buttonEnd": "#4e79a9",
+    "buttonText": "#ffffff"
+  }
+}

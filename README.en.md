@@ -1,143 +1,122 @@
-<div align="right"><sub><b>EN</b>&nbsp;&nbsp;⇄&nbsp;&nbsp;<a href="./README.md">中文</a></sub></div>
+[简体中文](README.md) | **English**
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/hero-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/hero-light.svg">
-  <img src="./assets/hero-light.svg" width="880" alt="agent-explain — Dry-run EXPLAIN for coding-agent plans">
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="assets/presentation/hero-mobile-dark.svg">
+  <source media="(max-width: 640px)" srcset="assets/presentation/hero-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/presentation/hero-dark.svg">
+  <img src="assets/presentation/hero-light.svg" width="960" alt="agent-explain — Inspect the plan before execution.">
 </picture>
 
-<p align="center"><sub>A dry-run EXPLAIN for coding-agent plans — projects each step's tokens, tool-calls, risk-class, and files-touched before you approve, so the tired human-in-the-loop inspects at the cost layer instead of rubber-stamping.</sub></p>
+**agent-explain turns Markdown coding plans into step-by-step projections of token ranges, action-verb counts, risk labels and referenced files before execution.**
 
-<p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
-  <a href="https://github.com/SuperMarioYL/agent-explain/releases"><img src="https://img.shields.io/github/v/release/SuperMarioYL/agent-explain" alt="Latest Release"></a>
-  <a href="https://github.com/SuperMarioYL/agent-explain/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/SuperMarioYL/agent-explain/ci.yml?label=CI" alt="CI Status"></a>
-  <img src="https://img.shields.io/badge/python-3.12+-3776AB" alt="Python 3.12+">
-  <img src="https://img.shields.io/badge/Coding%20Agent-dry--run-5E5CE6" alt="Coding Agent dry-run">
-  <img src="https://img.shields.io/badge/Agent-EXPLAIN-5E5CE6" alt="Agent EXPLAIN">
-</p>
+`Python 3.12+` · [MIT](LICENSE) · [GitHub](https://github.com/SuperMarioYL/agent-explain) · [Website](https://agent-explain.lei6393.com)
 
----
+## Why it helps
 
-**See the cost before you approve, not after the run.** Coding agents emit a multi-step plan and immediately execute — you can't inspect at the cost layer in time. agent-explain runs an EXPLAIN pass before the first action fires.
+Reading a file, editing code and deleting configuration deserve separate attention during plan review. The tool organizes those actions and their estimation basis so you can identify steps that need a closer look. It analyzes plan text without executing its commands.
 
----
-
-<h2><img src="https://api.iconify.design/tabler:topology-star-3.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Architecture</h2>
+The three-step example covers Read, Edit and Delete. Their labels are low, medium and high; auth.py remains unchanged.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/atlas-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/atlas-light.svg">
-  <img src="./assets/atlas-light.svg" width="880" alt="Architecture: plan.md → EXPLAIN engine → projection (table / --json)">
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="assets/presentation/process-mobile-dark.svg">
+  <source media="(max-width: 640px)" srcset="assets/presentation/process-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/presentation/process-dark.svg">
+  <img src="assets/presentation/process-light.svg" width="960" alt="Review three planned actions">
 </picture>
 
-Single Python process, no network calls, no LLM. `plan.md` flows through the parser (splits into steps) → analyzer (per-step token / tool-call / risk-class / files) → projector (aggregates) → renderer (rich table or JSON).
+## Architecture
 
-<h2><img src="https://api.iconify.design/tabler:bulb.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Why</h2>
+`parser.py` tries numbered headings, numbered lists and paragraphs in that order, extracting verbs and paths. `analyzer.py` combines token estimation with risk rules; `projector.py` sums token bounds and risks and deduplicates paths. `renderer.py` emits a table or JSON.
 
-In 2026, coding agents evolved from single-shot completions to "emit a multi-step plan, then execute" — the plan became a first-class, inspectable object. But the human-in-the-loop reviewing it can only see the semantic layer; they can't answer "how many tokens will this run burn / how many files will it touch / which step is riskiest." pydantic's [The human-in-the-loop is tired](https://pydantic.dev/articles/the-human-in-the-loop-is-tired) (HN 214↑ / 119 comments) hits this approval-fatigue pain head-on.
+The CLI passes the plan directory to the sampler. Paths are resolved there first, then tried as written; directories are not sampled as regular files.
 
-agent-explain imports PostgreSQL's EXPLAIN primitive (30+ years in databases) into the agent-plan space: project a plan's cost and risk *before* it runs. Unlike [cobusgreyling/loop-engineering](https://github.com/cobusgreyling/loop-engineering) (8k★, explicitly inspired by Boris Cherny) whose `loop-cost` is post-hoc accounting, agent-explain is pre-execution projection. This Agent primitive fills a gap: projects like [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) handle agent orchestration, but no one occupies the "preview before the loop" position. Every Coding Agent that emits a plan is a potential input — the dry-run EXPLAIN answers the cost-layer question the tired reviewer couldn't ask.
+<picture>
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="assets/presentation/architecture-mobile-dark.svg">
+  <source media="(max-width: 640px)" srcset="assets/presentation/architecture-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/presentation/architecture-dark.svg">
+  <img src="assets/presentation/architecture-light.svg" width="960" alt="Markdown to a reviewable projection">
+</picture>
 
-> Honest caveat: agent plans lack a DB-style optimizer + table-statistics, so the estimation basis is heuristic (static text analysis + sampled local file sizes), not optimizer-grade. That's why we ship **ranges + confidence**, never point estimates — the direct mitigation for the hardest technical falsifier ("estimates can't beat eyeballing").
+## Install
 
-### vs loop-engineering
-
-| Axis | agent-explain | [loop-engineering](https://github.com/cobusgreyling/loop-engineering) |
-|---|---|---|
-| Timeline | pre-execution projection | ✓ post-hoc accounting (loop-cost) |
-| Cost preview | ✓ token range + tool-call count | — |
-| Risk class | ✓ rule-based risk-class | — |
-| File tracking | ✓ files touched | partial (session replay) |
-| Agent orchestration | — (single-plan projection) | ✓ orchestration-first |
-| LLM dependency | — rules-only, no LLM | ✓ |
-
-<h2><img src="https://api.iconify.design/tabler:rocket.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Install</h2>
+Requires Python 3.12+. Install from source to obtain the examples:
 
 ```bash
-# No install needed — uv auto-pulls
-uvx agent-explain plan.md
+git clone https://github.com/SuperMarioYL/agent-explain.git
+cd agent-explain
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
 ```
 
-<h2><img src="https://api.iconify.design/tabler:rocket.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Quickstart</h2>
+Installation and first tokenizer initialization may download resources. No model API key is required.
+
+## Quickstart
+
+The repository supplies `examples/presentation/plan.md` and its referenced `auth.py`:
 
 ```bash
-# 1. Write a coding-agent multi-step plan (or use examples/plan.md)
-cat examples/plan.md
-
-# 2. Run EXPLAIN — get the per-step projection table
-uvx agent-explain examples/plan.md
-
-# 3. JSON output, pipe into a pre-approval gate
-agent-explain examples/plan.md --json
+cat examples/presentation/plan.md
+bash docs/demo.sh
 ```
 
-<details>
-<summary>Sample output</summary>
+The actual JSON totals are `est_tokens_range=[15,60]`, `total_tool_calls=3` and `total_files_touched=2`. The first two steps use a sampled basis; deletion uses static text. The absent obsolete.json is a path in the plan, not a file the tool creates or deletes.
 
-```
-                    agent-explain — pre-execution projection
-┏━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
-┃ Step  ┃ Tokens (range) ┃ Calls ┃  Risk   ┃ Files touched      ┃ Basis  ┃
-┡━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
-│ 1     │         ~26–52 │     1 │   LOW   │ src/auth.py        │ static │
-│ 2     │         ~33–66 │     1 │ MEDIUM  │ migrations/001.py  │ static │
-│ 3     │         ~32–64 │     3 │ MEDIUM  │ src/auth.py        │ static │
-│ 4     │         ~38–76 │     3 │  HIGH   │ config/old.json    │ static │
-│ 5     │         ~26–52 │     1 │ MEDIUM  │ tests/test_auth.py │ static │
-│ TOTAL │       ~155–310 │     9 │ L:1 M:3 │ 5 files            │   —    │
-└───────┴────────────────┴───────┴─────────┴────────────────────┴────────┘
-
-Estimates are ranges; calibrate against your actuals.
-```
-
-</details>
-
-<h2><img src="https://api.iconify.design/tabler:terminal-2.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Usage</h2>
+## Usage
 
 ```bash
-# Project a plan, output rich table
-agent-explain path/to/plan.md
-
-# JSON output, pipe into a pre-approval gate or jq filter
-agent-explain path/to/plan.md --json | jq '.totals'
-
-# Filter for high-risk steps only
-agent-explain path/to/plan.md --json | jq '.steps[] | select(.risk_class == "high")'
-
-# Use in an approval hook
-agent-explain .claude/plan.md --json | pre-approval-gate
+agent-explain explain examples/plan.md
+agent-explain explain examples/plan.md --json
+agent-explain explain examples/plan.md --json | jq .totals
+agent-explain explain examples/plan.md --json | jq '.steps[] | select(.risk_class == "high")'
+agent-explain --version
 ```
 
-More example plans in [`examples/`](./examples/).
+The v0.6.0 CLI requires the `explain` subcommand. JSON can feed your own approval program; this repository does not ship an executable named pre-approval-gate.
 
-<h2><img src="https://api.iconify.design/tabler:photo.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Demo</h2>
+## Capabilities and integrations
 
-![demo](assets/demo.gif)
+| Stage | Provided capability |
+|---|---|
+| Markdown plans | Numbered headings, lists and paragraph parsing |
+| Local files | Regular-file sizes inform estimates |
+| Terminal review | Rich step table |
+| External approval program | JSON projection; policy belongs to the integration |
 
-<h2><img src="https://api.iconify.design/tabler:map-2.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Roadmap</h2>
+<picture>
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="assets/presentation/integrations-mobile-dark.svg">
+  <source media="(max-width: 640px)" srcset="assets/presentation/integrations-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/presentation/integrations-dark.svg">
+  <img src="assets/presentation/integrations-light.svg" width="960" alt="Inputs and review outputs">
+</picture>
 
-- [x] **m1** — Parse a markdown plan into ordered steps; emit skeleton table (step id, raw text, tool verbs, file paths)
-- [x] **m2** — Per-step token estimation (tiktoken + sampled local file sizes) + rule-based risk-class; emit full projection table with token ranges and confidence basis
-- [ ] **m3** — Calibrate estimator against 3-5 real captured runs; emit accuracy note
-- [ ] Cross-agent support (Cursor/Codex native plan formats)
-- [ ] Calibration store / loop-cost training-signal loop
-- [ ] IDE integration / MCP server
+## Configuration and limits
 
-<h2><img src="https://api.iconify.design/tabler:share.svg?color=%230071E3&width=24" height="22" align="absmiddle" alt=""> Share this</h2>
+No model or service configuration is required. Text uses tiktoken; file estimation assumes roughly one token per four bytes. The sampled upper-bound multiplier is 1.6 and static is 2.0; confidence is fixed at 0.70 and 0.40 respectively.
 
-```
-agent-explain — the dry-run EXPLAIN for your Coding Agent's plan. Projects token ranges, tool-calls, and risk-class per step before you approve, not after. https://github.com/SuperMarioYL/agent-explain
-```
+These are implementation heuristics, not statistical confidence intervals. `tool_call_count` counts distinct action verbs. The highest matching English-keyword risk wins; unmatched text defaults to low, which does not establish that Chinese or unknown actions are safe.
 
-After pushing, set topics:
+## Recorded demo
+
+[Complete inputs and actual output](docs/demo-results.json) · [Reproduction script](docs/demo.sh)
+
+The [historical terminal recording](assets/demo.gif) and [recording script](docs/demo.tape) remain available. The recording was not remade for this documentation refresh; use the replayable JSON example above for current syntax and results.
+
+## Roadmap
+
+- [x] Markdown steps, action verbs and path extraction.
+- [x] Heuristic token ranges, risk rules and file sampling.
+- [x] Table/JSON output, path deduplication and totals.
+- [ ] Calibrate estimates against real execution data.
+- [ ] More native agent plan formats and IDE/MCP integrations.
+
+Unchecked items are not current capabilities.
+
+## Development and license
 
 ```bash
-gh repo edit SuperMarioYL/agent-explain --add-topic agent --add-topic coding-agent --add-topic explain --add-topic dry-run --add-topic cli
+python -m pip install pytest
+python -m pytest
 ```
 
-## Contributing
-
-File an [Issue](https://github.com/SuperMarioYL/agent-explain/issues) or open a [PR](https://github.com/SuperMarioYL/agent-explain/pulls).
-
-<p align="center"><sub><a href="./LICENSE">MIT</a> © 2026 SuperMarioYL</sub></p>
+[MIT](LICENSE) · [Issues](https://github.com/SuperMarioYL/agent-explain/issues)

@@ -1,0 +1,90 @@
+{
+  "name": "agent-explain",
+  "tagline": "Inspect the plan before execution.",
+  "architecture": {
+    "title": "Markdown to a reviewable projection",
+    "nodes": [
+      {
+        "title": "Markdown plan",
+        "detail": "Headings, lists or paragraphs"
+      },
+      {
+        "title": "Parser",
+        "detail": "Steps, verbs and file paths"
+      },
+      {
+        "title": "Analyzer",
+        "detail": "Token ranges and risk rules"
+      },
+      {
+        "title": "Projector",
+        "detail": "Totals and distinct paths"
+      },
+      {
+        "title": "Renderer",
+        "detail": "Table or JSON"
+      }
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  "process": {
+    "title": "Review three planned actions",
+    "steps": [
+      {
+        "title": "Read plan",
+        "detail": "Read, edit and delete steps"
+      },
+      {
+        "title": "Sample files",
+        "detail": "auth.py exists beside plan"
+      },
+      {
+        "title": "Classify steps",
+        "detail": "One low, medium and high"
+      },
+      {
+        "title": "Inspect totals",
+        "detail": "15–60 estimated tokens"
+      }
+    ],
+    "result": "Constructed plan; no planned action executed."
+  },
+  "integrations": {
+    "title": "Inputs and review outputs",
+    "items": [
+      {
+        "title": "Markdown",
+        "detail": "Three supported plan forms"
+      },
+      {
+        "title": "Local files",
+        "detail": "Optional byte-size sampling"
+      },
+      {
+        "title": "Terminal table",
+        "detail": "Human review"
+      },
+      {
+        "title": "JSON",
+        "detail": "Downstream policy input"
+      }
+    ]
+  }
+}

@@ -12,16 +12,16 @@ Enter
 Sleep 2s
 
 # Run EXPLAIN — the aha moment: per-step projection table
-Type "agent-explain examples/plan.md"
+Type "agent-explain explain examples/plan.md"
 Enter
 Sleep 3s
 
 # JSON output for piping into a pre-approval gate
-Type "agent-explain examples/plan.md --json"
+Type "agent-explain explain examples/plan.md --json"
 Enter
 Sleep 2s
 
 # Filter totals with jq
-Type "agent-explain examples/plan.md --json | jq .totals"
+Type "agent-explain explain examples/plan.md --json | jq .totals"
 Enter
 Sleep 2s
