@@ -235,5 +235,6 @@
       "zh": "Python 3.12+ · MIT",
       "en": "Python 3.12+ · MIT"
     }
-  }
+  },
+  "content_version": "0.6.0"
 }
