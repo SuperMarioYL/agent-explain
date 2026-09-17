@@ -1,8 +1,13 @@
 """CLI entry point for agent-explain.
 
 Usage:
-    agent-explain plan.md           # rich table projection
+    agent-explain plan.md           # rich table projection (primary)
     agent-explain plan.md --json    # JSON for pre-approval gate
+
+The projection is the app's single command (typer collapses a one-command
+app onto the root), so the documented bare invocation works directly. The
+v0.6.0 `explain` subcommand prefix was an undocumented workaround for the
+missing root argument and has been removed.
 """
 
 from __future__ import annotations
@@ -28,25 +33,16 @@ app = typer.Typer(
 )
 
 
-@app.callback(invoke_without_command=True)
-def _main(
+@app.command()
+def explain(
     version: bool = typer.Option(
         False,
         "--version",
         help="Show the installed version and exit.",
         is_eager=True,
     ),
-) -> None:
-    """agent-explain — dry-run EXPLAIN for coding-agent plans."""
-    if version:
-        typer.echo(f"agent-explain {__version__}")
-        raise typer.Exit()
-
-
-@app.command()
-def explain(
     plan_file: Path = typer.Argument(
-        ...,
+        None,
         exists=True,
         dir_okay=False,
         readable=True,
@@ -59,6 +55,19 @@ def explain(
     ),
 ) -> None:
     """Project a coding-agent plan's cost and risk before execution."""
+    if version:
+        typer.echo(f"agent-explain {__version__}")
+        raise typer.Exit()
+    if plan_file is None:
+        # Optional-argument form of no_args_is_help: a bare `agent-explain`
+        # (and `--version` before a plan is given) must never crash on a
+        # missing required argument.
+        typer.echo(
+            "Usage: agent-explain <plan.md> [--json]\n"
+            "Try 'agent-explain --help' for more information.",
+            err=True,
+        )
+        raise typer.Exit(1)
     text = plan_file.read_text(encoding="utf-8")
     plan = parse_plan(text)
     # Resolve plan-referenced file paths against the plan file's directory, not

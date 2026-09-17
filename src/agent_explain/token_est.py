@@ -10,6 +10,7 @@ falsifier ("estimates can't beat eyeballing").
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Literal
 
@@ -29,20 +30,51 @@ _STATIC_HIGH_MULT = 2.0
 # Encoding cache.
 _encoder: "tiktoken.Encoding | None" = None
 
+# Set when no tiktoken encoding could be loaded (offline first run — both
+# cl100k_base and the gpt2 fallback download their BPE from the network) and
+# counts are approximated via the bytes-per-token ratio instead.
+_encoder_unavailable = False
 
-def _get_encoder() -> "tiktoken.Encoding":
-    global _encoder
-    if _encoder is None:
-        try:
-            _encoder = tiktoken.get_encoding("cl100k_base")
-        except Exception:
-            _encoder = tiktoken.get_encoding("gpt2")
+
+def _warn_approx_once() -> None:
+    print(
+        "agent-explain: no tiktoken encoding available (offline?) — "
+        "token counts are approximated (bytes/4).",
+        file=sys.stderr,
+    )
+
+
+def _get_encoder() -> "tiktoken.Encoding | None":
+    """Load the BPE encoding, or None when none can be loaded (offline).
+
+    tiktoken downloads each encoding's BPE file on first use; an air-gapped
+    machine has neither cl100k_base nor the gpt2 fallback cached, and both
+    raises must degrade to the approximation instead of crashing the CLI.
+    """
+    global _encoder, _encoder_unavailable
+    if _encoder is None and not _encoder_unavailable:
+        for name in ("cl100k_base", "gpt2"):
+            try:
+                _encoder = tiktoken.get_encoding(name)
+                break
+            except Exception:
+                continue
+        if _encoder is None:
+            _encoder_unavailable = True
+            _warn_approx_once()
     return _encoder
 
 
 def count_text_tokens(text: str) -> int:
-    """Count tokens in *text* using tiktoken (cl100k_base encoding)."""
+    """Count tokens in *text* using tiktoken (cl100k_base encoding).
+
+    Degrades to a bytes/4 approximation when no encoding can be loaded
+    (offline): a pre-approval projection must stay usable without network,
+    and the estimator already ships ranges + a confidence note.
+    """
     enc = _get_encoder()
+    if enc is None:
+        return max(1, len(text.encode("utf-8")) // _BYTES_PER_TOKEN)
     return len(enc.encode(text))
 
 

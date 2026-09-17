@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-18
+
+### Fixed
+- The documented primary invocation `agent-explain plan.md` now works.
+  v0.6.0 only accepted the plan file as an argument of the `explain`
+  subcommand, so the bare documented form failed with
+  `No such command 'plan.md'` (reproduced live). The projection is now the
+  app's single command (typer collapses a one-command app onto the root).
+  **Breaking:** the `explain` subcommand prefix — an undocumented workaround
+  for this very bug — is removed; `agent-explain explain plan.md` now treats
+  `explain` as the (nonexistent) plan path. A bare `agent-explain` prints a
+  usage hint instead of crashing, and `--version` works without a plan file.
+- Offline (air-gapped) use degrades instead of crashing: both tiktoken
+  encodings (`cl100k_base` and the `gpt2` fallback) download their BPE from
+  the network on first use, so an offline first run raised an opaque error
+  through every projection. When no encoding can be loaded, counts fall back
+  to the bytes/4 approximation (warned once on stderr) — ranges and the
+  confidence note stay honest.
+
+[0.7.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.7.0
+
 ## [0.6.0] - 2026-09-04
 
 ### Fixed
