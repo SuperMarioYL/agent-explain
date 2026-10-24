@@ -25,14 +25,17 @@ from agent_explain.cli import app
 
 _ROOT = Path(__file__).resolve().parent.parent
 
-# Documented invocation surfaces. CHANGELOG.md is deliberately excluded: its
-# v0.7.0 entry documents the removal of the prefix and must keep saying so.
+# Documented invocation surfaces — including the website content package,
+# which renders its demo command on the live product page. CHANGELOG.md is
+# deliberately excluded: its v0.7.0 entry documents the removal of the prefix
+# and must keep saying so.
 _DOC_SURFACES = (
     "README.md",
     "README.en.md",
     "docs/demo.sh",
     "docs/demo.tape",
     "docs/demo-results.json",
+    "web/site.json",
 )
 
 _REMOVED_PREFIX = "agent-explain explain"
