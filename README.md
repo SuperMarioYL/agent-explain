@@ -65,14 +65,14 @@ bash docs/demo.sh
 ## 用法
 
 ```bash
-agent-explain explain examples/plan.md
-agent-explain explain examples/plan.md --json
-agent-explain explain examples/plan.md --json | jq .totals
-agent-explain explain examples/plan.md --json | jq '.steps[] | select(.risk_class == "high")'
+agent-explain examples/plan.md
+agent-explain examples/plan.md --json
+agent-explain examples/plan.md --json | jq .totals
+agent-explain examples/plan.md --json | jq '.steps[] | select(.risk_class == "high")'
 agent-explain --version
 ```
 
-v0.6.0 的实际命令需要 `explain` 子命令。JSON 可以作为你自己的审批程序输入；仓库不包含名为 pre-approval-gate 的可执行文件。
+计划文件是位置参数。v0.7.0 已移除 `explain` 子命令，因此旧写法（在命令后加 `explain`）现在会报文件不存在。JSON 可以作为你自己的审批程序输入；仓库不包含名为 pre-approval-gate 的可执行文件。
 
 ## 能力与集成
 

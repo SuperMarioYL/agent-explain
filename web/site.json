@@ -11,7 +11,7 @@
   "meta": {
     "visual_profile": "neon-particle",
     "demo_source": "docs/demo-results.json",
-    "implementation_version": "0.6.0"
+    "implementation_version": "0.8.0"
   },
   "hero": {
     "eyebrow": {
@@ -185,8 +185,8 @@
       "en": "Run the supplied example"
     },
     "note": {
-      "zh": "v0.6.0 的三步构造计划实际 JSON 输出。数字是启发式投影；没有运行 Agent 或执行计划动作。",
-      "en": "Actual v0.6.0 JSON output for a constructed three-step plan. Values are heuristic projections; no agent or planned action ran."
+      "zh": "v0.8.0 的三步构造计划实际 JSON 输出。数字是启发式投影；没有运行 Agent 或执行计划动作。",
+      "en": "Actual v0.8.0 JSON output for a constructed three-step plan. Values are heuristic projections; no agent or planned action ran."
     },
     "source": "https://github.com/SuperMarioYL/agent-explain/blob/main/docs/demo-results.json",
     "steps": [
@@ -248,5 +248,5 @@
       "en": "Python 3.12+ · MIT"
     }
   },
-  "content_version": "0.7.0"
+  "content_version": "0.8.0"
 }

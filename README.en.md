@@ -65,14 +65,14 @@ The actual JSON totals are `est_tokens_range=[15,60]`, `total_tool_calls=3` and 
 ## Usage
 
 ```bash
-agent-explain explain examples/plan.md
-agent-explain explain examples/plan.md --json
-agent-explain explain examples/plan.md --json | jq .totals
-agent-explain explain examples/plan.md --json | jq '.steps[] | select(.risk_class == "high")'
+agent-explain examples/plan.md
+agent-explain examples/plan.md --json
+agent-explain examples/plan.md --json | jq .totals
+agent-explain examples/plan.md --json | jq '.steps[] | select(.risk_class == "high")'
 agent-explain --version
 ```
 
-The v0.6.0 CLI requires the `explain` subcommand. JSON can feed your own approval program; this repository does not ship an executable named pre-approval-gate.
+The plan file is a positional argument. The `explain` subcommand was removed in v0.7.0, so the older form that prefixed the command with it now fails with a file-not-found error. JSON can feed your own approval program; this repository does not ship an executable named pre-approval-gate.
 
 ## Capabilities and integrations
 

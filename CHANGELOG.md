@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-25
+
+### Fixed
+- **fix-docs-explain-subcommand-invocation-drift** — every documented
+  invocation now matches the shipped CLI. v0.7.0 removed the `explain`
+  subcommand but updated only the module docstring and this changelog, so the
+  README Usage block, `docs/demo.sh`, `docs/demo.tape` and
+  `docs/demo-results.json` kept documenting `agent-explain explain <plan>` —
+  which exits 2 with `File 'explain' does not exist` (reproduced live). The
+  documented form is now the bare `agent-explain <plan.md>`, the stale "the
+  v0.6.0 CLI requires the `explain` subcommand" sentence is gone, and the
+  recorded demo command was regenerated from a real run. Covered by
+  `tests/test_docs_invocation.py`, which also replays the recorded command.
+- **fix-version-surface-drift-incomplete** — the v0.6.0 lockstep test pinned
+  only `web/site.json` `content_version`, so three other surfaces were left at
+  `0.6.0` on the v0.7.0 tag: `web/site.json`
+  `meta.implementation_version`, the site's demo caption,
+  `docs/demo-results.json` `version` and the `uv.lock` root package entry.
+  `tests/test_version.py` now asserts all of them, plus a sweep rejecting any
+  version literal in the site content or demo record that disagrees with
+  `__version__`; the stale `[Unreleased]` compare link was repointed at v0.7.0.
+- **fix-release-assets-never-attached** — `release.yml` uploaded the built
+  distributions only to the Actions artifact store, so the v0.6.0 and v0.7.0
+  releases carried zero assets (and v0.5.0 carried a mis-versioned
+  `agent_explain-0.4.0` wheel). The workflow now creates the release when
+  absent and attaches `dist/*.whl`, `dist/*.tar.gz` and `dist/checksums.txt`
+  with `--clobber` so the step is idempotent. Covered by
+  `tests/test_release_workflow.py`.
+- **fix-format-drive-letter-false-low** — the scoped disk-format rule added in
+  v0.5.0 ended with `\b` after its `[a-z]:` alternative, but a drive target is
+  always followed by whitespace, a `/` or end-of-input, so no word boundary
+  exists and the branch was dead: `format C:` classified LOW, the same class as
+  a read-only step, for a destructive disk-format command. The drive-letter
+  branch now carries its own lookahead; `/dev/`, `sd*`, `nvme`, `hd`, `disk`
+  and `drive` behave as before and benign "format the code/output" steps stay
+  non-HIGH. Covered by `tests/test_risk_rules.py`.
+
+[0.8.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.8.0
+
 ## [0.7.0] - 2026-09-18
 
 ### Fixed
@@ -76,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rule-based `risk_rules` (delete/move file = high; shell-exec / network = medium-high; read-only = low) — no LLM call in v0.1.
 - Ranges + confidence basis on every projection (never a point estimate) as the direct mitigation for the hardest technical falsifier ("estimates can't beat eyeballing").
 
-[Unreleased]: https://github.com/SuperMarioYL/agent-explain/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/SuperMarioYL/agent-explain/compare/v0.7.0...HEAD
 [0.5.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.5.0
 [0.4.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.4.0
 [0.3.0]: https://github.com/SuperMarioYL/agent-explain/releases/tag/v0.3.0

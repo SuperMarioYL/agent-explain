@@ -23,7 +23,11 @@ _HIGH_PATTERNS: list[re.Pattern[str]] = [
         r"\b(?:mv|move|rename|relocate)\b",
         r"\bgit\s+(?:push|force|reset|--hard|clean|rm|rebase)\b",
         r"\b(?:fdisk|mkfs)\b",
-        r"\bformat\s+(?:/dev/|sd[a-z]|nvme|hd|disk|drive|[a-z]:)\b",
+        # Disk-targeted format only. Each alternative carries its own
+        # terminator: a drive-letter target ("format C:") is always followed by
+        # whitespace, a "/" switch or end-of-input, so a trailing \b can never
+        # hold after the ":" and the branch would be dead.
+        r"\bformat\s+(?:/dev/|sd[a-z]\b|nvme\b|hd\b|disk\b|drive\b|[a-z]:(?=\s|/|$))",
         r"\bsudo\s+rm\b",
         r"\bchmod\s+[0-7]{3,4}\b",
     ]

@@ -32,3 +32,25 @@ def test_disk_format_command_still_high_risk():
     assert classify_risk("format sdz") == "high"
     assert classify_risk("mkfs.ext4 /dev/sda1") == "high"
     assert classify_risk("fdisk /dev/sda") == "high"
+
+
+def test_drive_letter_format_command_is_high_risk():
+    """A Windows drive-format command must be HIGH.
+
+    Regression for fix-format-drive-letter-false-low (v0.8.0): the v0.5.0
+    scoped pattern ended with ``\\b`` after its ``[a-z]:`` alternative, but a
+    drive target is always followed by whitespace, a ``/`` or end-of-input —
+    all non-word — so no word boundary exists and the branch was dead. These
+    commands classified LOW.
+    """
+    assert classify_risk("format C:") == "high"
+    assert classify_risk("format C: /fs:ntfs") == "high"
+    assert classify_risk("format D:") == "high"
+
+
+def test_benign_format_still_not_high_after_drive_letter_fix():
+    """Widening the drive-letter branch must not re-introduce the v0.5.0
+    false HIGH on benign formatting steps."""
+    assert classify_risk("Format the output as JSON.") != "high"
+    assert classify_risk("Format the code with black.") != "high"
+    assert classify_risk("format the disk") != "high"

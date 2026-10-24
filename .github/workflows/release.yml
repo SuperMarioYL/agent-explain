@@ -30,6 +30,20 @@ jobs:
         with:
           name: dist
           path: dist/
+      - name: Attach distributions to the GitHub Release
+        # The Release page is the install surface for `uvx agent-explain
+        # plan.md`, so the wheel, sdist and checksums must be attached to it —
+        # uploading only to the Actions artifact store leaves it empty.
+        # Idempotent: create the release when absent, then --clobber so a
+        # re-run (or another uploader) cannot fail or race.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" \
+                 --title "$GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" \
+            dist/*.whl dist/*.tar.gz dist/checksums.txt --clobber
 
   pypi:
     needs: build
